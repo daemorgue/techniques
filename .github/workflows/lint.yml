@@ -18,25 +18,11 @@ jobs:
       with:
         files: "reports/**/README.md"
 
-    - name: Setup Go environment
-      uses: actions/setup-go@v5.5.0
-      with:
-        go-version: '1.21'
-
-    - name: Install dependencies
-      run: go get github.com/yuin/goldmark
-
-    - name: Run linter on changed files
-      if: steps.changed-markdown-files.outputs.any_changed == 'true'
-      run: go run tools/trrlint/main.go ${{ steps.changed-markdown-files.outputs.all_changed_files }}
-
-    - name: Run linter on all files
-      if: github.event_name == 'workflow_dispatch'
-      run: go run tools/trrlint/main.go
-
-    # tiredize (https://github.com/tired-labs/tiredize) is being phased in to
-    # replace tools/trrlint. Until it reaches feature parity its findings are
-    # reported but do not fail the job. Config lives in .github/tiredize/.
+    # TRRs are linted with tiredize (https://github.com/tired-labs/tiredize)
+    # using the configuration in .github/tiredize/. The document-structure
+    # check (markdown schema) blocks the PR. The style rules are reported but
+    # do not fail the job yet: tiredize's parser still produces false
+    # positives on footnote definitions and on code blocks inside blockquotes.
     - name: Setup Python environment
       uses: actions/setup-python@v5
       with:
@@ -47,22 +33,34 @@ jobs:
       # is still changing upstream.
       run: pip install "git+https://github.com/tired-labs/tiredize.git@08aafe55f46b25820e7be5b46b391c2126d24cf0"
 
-    - name: Run tiredize on changed files
+    - name: Check TRR structure of changed files
+      if: steps.changed-markdown-files.outputs.any_changed == 'true'
+      run: >
+        tiredize
+        --markdown-schema .github/tiredize/markdown-schema.yaml
+        ${{ steps.changed-markdown-files.outputs.all_changed_files }}
+
+    - name: Check style rules of changed files
       if: steps.changed-markdown-files.outputs.any_changed == 'true'
       continue-on-error: true
       run: >
         tiredize
-        --markdown-schema .github/tiredize/markdown-schema.yaml
         --rules .github/tiredize/rules.yaml
         ${{ steps.changed-markdown-files.outputs.all_changed_files }}
 
-    - name: Run tiredize on all files
+    - name: Check TRR structure of all files
+      if: github.event_name == 'workflow_dispatch'
+      run: >
+        find docs/examples reports -name README.md -print0
+        | xargs -0 tiredize
+        --markdown-schema .github/tiredize/markdown-schema.yaml
+
+    - name: Check style rules of all files
       if: github.event_name == 'workflow_dispatch'
       continue-on-error: true
       run: >
         find docs/examples reports -name README.md -print0
         | xargs -0 tiredize
-        --markdown-schema .github/tiredize/markdown-schema.yaml
         --rules .github/tiredize/rules.yaml
 
     - name: Validate indexer would pass

@@ -5,11 +5,18 @@ adhering to generally-accepted Markdown best practices in an attempt to maximize
 compatibility for as many Markdown renderers as possible. Following the
 instructions below will stop a lot of common pitfalls.
 
-The repo will automatically lint TRR submissions to help you check for issues. A
-compiled release of the linter is also available so you can check before you
-submit a pull request. You can find it in the Releases section. Run it from the
-root folder in your local directory, and fix any issues that it identifies
-before submitting your pull request.
+The repo will automatically lint TRR submissions with [tiredize] to help you
+check for issues, using the configuration in the `.github/tiredize/` folder.
+You can run the same checks before you submit a pull request. From the root
+folder of your local copy:
+
+```text
+pip install git+https://github.com/tired-labs/tiredize.git
+tiredize --markdown-schema .github/tiredize/markdown-schema.yaml \
+    --rules .github/tiredize/rules.yaml reports/trr0000/<platform>/README.md
+```
+
+Fix any issues that it identifies before submitting your pull request.
 
 ## Markdown syntax
 
@@ -184,3 +191,4 @@ do that as it's confusing for those reading the raw Markdown files.
 ```
 
 [template]: examples/trr0000/win/README.md
+[tiredize]: https://github.com/tired-labs/tiredize
