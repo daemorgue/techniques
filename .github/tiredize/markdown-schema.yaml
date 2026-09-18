@@ -1,0 +1,72 @@
+# TRR document structure, as specified by docs/TECHNIQUE-RESEARCH-REPORT.md
+# and docs/STYLE-GUIDE.md ("Document layout"):
+#
+#   - H1 and the six H2 sections are fixed and ordered.
+#   - Headings the TRR guide names (Scope Statement, Procedure X, Detection
+#     Data Model) are required where the guide places them.
+#   - All other H3+ headings are the author's choice ("flexibility in how to
+#     use third and lower level headings"), so prose sections accept free
+#     sub-headings; table/list sections do not.
+#
+# Validated with: tiredize --markdown-schema .github/tiredize/markdown-schema.yaml
+
+enforce_order: true
+allow_extra_sections: false
+
+sections:
+  # TRR Name: exactly one non-empty H1.
+  - pattern: "\\S.*"
+    level: 1
+    sections:
+
+      - name: "Metadata"
+        sections:
+          # "This optional section" - TRR guide, Scope Statement.
+          - name: "Scope Statement"
+            required: false
+
+      - name: "Technique Overview"
+        sections:
+          - &free_h3
+            pattern: ".+"
+            required: false
+            repeat: { min: 0 }
+            sections:
+              - &free_h4
+                pattern: ".+"
+                required: false
+                repeat: { min: 0 }
+                sections:
+                  - &free_h5
+                    pattern: ".+"
+                    required: false
+                    repeat: { min: 0 }
+                    sections:
+                      - pattern: ".+"
+                        required: false
+                        repeat: { min: 0 }
+
+      - name: "Technical Background"
+        sections:
+          - *free_h3
+
+      - name: "Procedures"
+        sections:
+          # "Procedure A: Procedure Name #1 ... and so on" - one or more.
+          - pattern: "Procedure [A-Z]: .+"
+            repeat: true
+            sections:
+              # Author-organised sub-headings inside the narrative. The
+              # negative lookahead keeps this from also matching the DDM
+              # heading (tiredize rejects ambiguous sibling matches).
+              - pattern: "(?!Detection Data Model$).+"
+                required: false
+                repeat: { min: 0 }
+                sections:
+                  - *free_h5
+              # Every procedure closes with its DDM.
+              - name: "Detection Data Model"
+
+      - name: "Available Emulation Tests"
+
+      - name: "References"

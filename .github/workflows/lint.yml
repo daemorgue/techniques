@@ -34,6 +34,37 @@ jobs:
       if: github.event_name == 'workflow_dispatch'
       run: go run tools/trrlint/main.go
 
+    # tiredize (https://github.com/tired-labs/tiredize) is being phased in to
+    # replace tools/trrlint. Until it reaches feature parity its findings are
+    # reported but do not fail the job. Config lives in .github/tiredize/.
+    - name: Setup Python environment
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Install tiredize
+      # No PyPI release yet; pinned to a commit because the finding taxonomy
+      # is still changing upstream.
+      run: pip install "git+https://github.com/tired-labs/tiredize.git@08aafe55f46b25820e7be5b46b391c2126d24cf0"
+
+    - name: Run tiredize on changed files
+      if: steps.changed-markdown-files.outputs.any_changed == 'true'
+      continue-on-error: true
+      run: >
+        tiredize
+        --markdown-schema .github/tiredize/markdown-schema.yaml
+        --rules .github/tiredize/rules.yaml
+        ${{ steps.changed-markdown-files.outputs.all_changed_files }}
+
+    - name: Run tiredize on all files
+      if: github.event_name == 'workflow_dispatch'
+      continue-on-error: true
+      run: >
+        find docs/examples reports -name README.md -print0
+        | xargs -0 tiredize
+        --markdown-schema .github/tiredize/markdown-schema.yaml
+        --rules .github/tiredize/rules.yaml
+
     - name: Validate indexer would pass
       if: steps.changed-markdown-files.outputs.all_any_changed == 'true'
       run: python3 tools/index/index.py merge -f ${{ steps.changed-markdown-files.outputs.all_all_changed_files }}

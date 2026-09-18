@@ -1,0 +1,22 @@
+# tiredize linter rules for TRRs. See docs/STYLE-GUIDE.md.
+#
+# Only the trrlint checks tiredize can express today are enabled here;
+# tools/trrlint remains in CI for the rest until parity is reached.
+
+# "Lines should be wrapped at 80 characters" - exempt: tables, code blocks,
+# long URLs (style guide), plus image lines, which cannot be wrapped.
+line_length:
+  maximum_length: 80
+  exclude:
+    - code_block
+    - image_inline
+    - reference_definition
+    - table
+
+# "Please use only global links ... in paragraphs." Matches trrlint, which
+# rejects [text](url) and <http://...>. Bare URLs and email addresses
+# (autolink_extended) are deliberately not disallowed.
+elements:
+  disallow:
+    - autolink
+    - link_inline
